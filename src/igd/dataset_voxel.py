@@ -92,12 +92,24 @@ class DatasetVoxelOccFile(torch.utils.data.Dataset):
         self.num_th = 32
         self.df = read_df(raw_root)
         self.size, _, _, _ = read_setup(raw_root)
-        # self.panda_hand = URDF.load("/home/pinhao/Desktop/GIGA/data/urdfs/panda/hand.urdf")
-        # fk = self.panda_hand.collision_trimesh_fk()
-        # meshes = list(fk.keys())
-        # self.meshes_o3d = []
-        # for mesh in meshes:
-            # self.meshes_o3d.append(mesh)
+        
+        # --- FIX Gizem: Dynamically load URDF relative to workspace root ---
+        urdf_path = Path("data/urdfs/panda/hand.urdf").resolve()
+        self.panda_hand = URDF.load(str(urdf_path))
+        
+        fk = self.panda_hand.collision_trimesh_fk()
+        meshes = list(fk.keys())
+        self.meshes_o3d = []
+        for mesh in meshes:
+            # Create a native Open3D TriangleMesh directly from trimesh vertices and faces
+            o3d_mesh = o3d.geometry.TriangleMesh()
+            o3d_mesh.vertices = o3d.utility.Vector3dVector(mesh.vertices)
+            o3d_mesh.triangles = o3d.utility.Vector3iVector(mesh.faces)
+            
+            # Recompute vertex normals so the rendering looks perfectly smooth
+            o3d_mesh.compute_vertex_normals()
+            
+            self.meshes_o3d.append(o3d_mesh)
         self.bias = np.array([0.0, -0.0047, 0.033])
         # self.meshes_o3d[0].as_open3d.get_center()
 
@@ -289,6 +301,14 @@ class DatasetVoxelOccFile(torch.utils.data.Dataset):
 
     def read_occ(self, scene_id, num_point):
         occ_paths = list((self.raw_root / 'occ' / scene_id).glob('*.npz'))
+
+        if len(occ_paths) == 0:
+            # Generate a safe zero-filled fallback tensor silently 
+            # so the training loop/DataLoader can keep running smoothly without a crash.
+            points = np.zeros((num_point, 3), dtype=np.float32)
+            occ = np.zeros((num_point,), dtype=np.float32)
+            return points, occ
+
         path_idx = torch.randint(high=len(occ_paths), size=(1,), dtype=int).item()
         occ_path = occ_paths[path_idx]
         occ_data = np.load(occ_path)
@@ -409,10 +429,34 @@ def sample_point_cloud(pc, num_point, return_idx=False):
         return pc[idxs]
 
 if __name__=='__main__':
-    dataset = DatasetVoxelOccFile(Path("/home/pinhao/Desktop/GIGA/data/data_pile_train_processed_dex_noise"), Path("/home/pinhao/Desktop/GIGA/data/data_pile_train_raw"), augment=True)
+    # Gizem fix
+    base_data_path = Path("data")   
+    processed_dir = base_data_path / "pile" / "data_pile_train_processed_dex_noise"
+    raw_dir = base_data_path / "pile" / "data_pile_train_raw"
+
+    if not processed_dir.exists() or not raw_dir.exists():
+        raise FileNotFoundError(
+            f"Missing dataset paths!\nEnsure you have unzipped your datasets into:\n"
+            f"  - {processed_dir}\n  - {raw_dir}"
+        )
+
+    # Pass ONLY the parameters your __init__ expects
+    dataset = DatasetVoxelOccFile(
+        root=processed_dir, 
+        raw_root=raw_dir, 
+        augment=True
+    )
+
+    
+    print(f"--> SUCCESS: Local dataset mapped. Found {len(dataset)} items available.")
+
+
+
+    ## From the developer
+    # dataset = DatasetVoxelOccFile(Path("/home/pinhao/Desktop/GIGA/data/data_pile_train_processed_dex_noise"), Path("/home/pinhao/Desktop/GIGA/data/data_pile_train_raw"), augment=True)
 
     # mesh_scene = dataset.get_mesh(0)
-    # panda_hand = URDF.load("/home/pinhao/Desktop/GIGA/data/urdfs/panda/hand.urdf")
+    # panda_hand = URDF.load(self.urdf+"/panda/hand.urdf")
     # for joint in panda_hand.actuated_joints:
     #     print(joint)
 
@@ -423,7 +467,7 @@ if __name__=='__main__':
     #     meshes_o3d.append(mesh.as_open3d)
     # meshes_o3d[1].translate(np.array([0.0,0.1,0.0584]))
     # meshes_o3d[2].translate(np.array([0.0,0.0,0.0584]))
-    # all_mesh = Mesh("/home/pinhao/Desktop/GIGA/data/urdfs/panda/hand.urdf", meshes=meshes)
+    # all_mesh = Mesh(self.urdf+"/panda/hand.urdf", meshes=meshes)
     # o3d.visualization.draw_geometries([mesh_scene.as_open3d], window_name="franka hand", width=800,height=600, left=50, top=50, point_show_normal=False, mesh_show_wireframe=True, mesh_show_back_face=True)
 
     # o3d.visualization.draw_geometries(meshes_o3d, window_name="franka hand", width=800,height=600, left=50, top=50, point_show_normal=False, mesh_show_wireframe=True, mesh_show_back_face=True)

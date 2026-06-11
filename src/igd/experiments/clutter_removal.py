@@ -103,13 +103,16 @@ def run(
                 # print('pc is empty')
                 break  # empty point cloud, abort this round TODO this should not happen
 
-            # plan grasps
             if visualize:
                 mesh_pose_list = get_mesh_pose_list_from_world(sim.world, object_set)
                 scene_mesh = get_scene_from_mesh_pose_list(mesh_pose_list)
+                print("\n[HEARTBEAT 1/2] Entering network planning loop (with visualization)...")
                 grasps, scores, timings["planning"], visual_mesh = grasp_plan_fn(state, scene_mesh=scene_mesh)
+                print("[HEARTBEAT 2/2] Network planning call successful!")
             else:
+                print("\n[HEARTBEAT 1/2] Entering network planning loop...")
                 grasps, scores, timings["planning"] = grasp_plan_fn(state, last_trial)
+                print("[HEARTBEAT 2/2] Network planning call successful!")
             planning_times.append(timings["planning"])
             total_times.append(timings["planning"] + timings["integration"])
 

@@ -1,0 +1,10 @@
+class PointCloud2: pass
+class PointField: pass
+class Image: pass
+class CompressedImage: pass
+class CameraInfo: pass
+class JointState: pass
+class RegionOfInterest: pass
+class LaserScan: pass
+class Imu: pass
+class Joy: pass

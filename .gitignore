@@ -114,3 +114,5 @@ venv.bak/
 # custom
 .DS_Store
 /notebooks
+
+cuda_12.8.0_570.86.10_linux.run

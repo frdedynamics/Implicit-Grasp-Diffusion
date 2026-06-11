@@ -16,6 +16,9 @@ import os
 # os.environ['CUDA_LAUNCH_BLOCKING']='1'
 # os.environ['OMP_NUM_THREADS']='24'
 # os.environ['TORCH_CUDA_ALLOC_SYNC'] = '1'
+
+
+
 def main(args):
 
     if args.type in ['giga', 'giga_aff']:

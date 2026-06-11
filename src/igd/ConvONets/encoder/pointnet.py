@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from igd.ConvONets.layers import ResnetBlockFC
-from torch_scatter import scatter_mean, scatter_max
+from igd.ConvONets.encoder.scatter_compat import scatter_mean, scatter_max
 from igd.ConvONets.common import coordinate2index, normalize_coordinate, normalize_3d_coordinate, map2local
 from igd.ConvONets.encoder.unet import UNet
 from igd.ConvONets.encoder.unet3d import UNet3D

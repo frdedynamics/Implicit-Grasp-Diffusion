@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_scatter import scatter_mean
+from igd.ConvONets.encoder.scatter_compat import scatter_mean
 from igd.ConvONets.encoder.unet import UNet
 from igd.ConvONets.encoder.unet3d import UNet3D
 from igd.ConvONets.common import coordinate2index, normalize_coordinate, normalize_3d_coordinate

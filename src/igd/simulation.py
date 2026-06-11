@@ -178,26 +178,26 @@ class ClutterRemovalSim(object):
         attempts = 0
         max_attempts = 12
         object_list = [
-            "/home/pinhao/Desktop/GIGA/data/urdfs/packed/test/wooden_block.urdf",
-            "/home/pinhao/Desktop/GIGA/data/urdfs/packed/test/pudding_box.urdf",
-            "/home/pinhao/Desktop/GIGA/data/urdfs/packed/test/chips_can.urdf",
-            "/home/pinhao/Desktop/GIGA/data/urdfs/packed/train/sugar_box.urdf",
-            "/home/pinhao/Desktop/GIGA/data/urdfs/packed/train/cheez_it_white_cheddar.urdf",
-            "/home/pinhao/Desktop/GIGA/data/urdfs/pile/train/box_poisson_006.urdf",
-            "/home/pinhao/Desktop/GIGA/data/urdfs/pile/train/BlueSaltCube_800_tex.urdf",
-            "/home/pinhao/Desktop/GIGA/data/urdfs/blocks/cube.urdf",
-            "/home/pinhao/Desktop/GIGA/data/urdfs/blocks/cylinder.urdf"
+            self.urdf+"/packed/test/wooden_block.urdf",
+            self.urdf+"/packed/test/pudding_box.urdf",
+            self.urdf+"/packed/test/chips_can.urdf",
+            self.urdf+"/packed/train/sugar_box.urdf",
+            self.urdf+"/packed/train/cheez_it_white_cheddar.urdf",
+            self.urdf+"/pile/train/box_poisson_006.urdf",
+            self.urdf+"/pile/train/BlueSaltCube_800_tex.urdf",
+            self.urdf+"/blocks/cube.urdf",
+            self.urdf+"/blocks/cylinder.urdf"
         ]
         scale_dict = {
-            "/home/pinhao/Desktop/GIGA/data/urdfs/packed/test/wooden_block.urdf": 0.45,
-            "/home/pinhao/Desktop/GIGA/data/urdfs/packed/test/pudding_box.urdf": 1.33,
-            "/home/pinhao/Desktop/GIGA/data/urdfs/packed/test/chips_can.urdf": 0.48,
-            "/home/pinhao/Desktop/GIGA/data/urdfs/packed/train/sugar_box.urdf":0.6,
-            "/home/pinhao/Desktop/GIGA/data/urdfs/packed/train/cheez_it_white_cheddar.urdf":0.45,
-            "/home/pinhao/Desktop/GIGA/data/urdfs/pile/train/box_poisson_006.urdf":1,
-            "/home/pinhao/Desktop/GIGA/data/urdfs/pile/train/BlueSaltCube_800_tex.urdf":1.1,
-            "/home/pinhao/Desktop/GIGA/data/urdfs/blocks/cube.urdf":1.66,
-            "/home/pinhao/Desktop/GIGA/data/urdfs/blocks/cylinder.urdf":1,
+            self.urdf+"/packed/test/wooden_block.urdf": 0.45,
+            self.urdf+"/packed/test/pudding_box.urdf": 1.33,
+            self.urdf+"/packed/test/chips_can.urdf": 0.48,
+            self.urdf+"/packed/train/sugar_box.urdf":0.6,
+            self.urdf+"/packed/train/cheez_it_white_cheddar.urdf":0.45,
+            self.urdf+"/pile/train/box_poisson_006.urdf":1,
+            self.urdf+"/pile/train/BlueSaltCube_800_tex.urdf":1.1,
+            self.urdf+"/blocks/cube.urdf":1.66,
+            self.urdf+"/blocks/cylinder.urdf":1,
         }
 
         while self.num_objects < object_count and attempts < max_attempts:

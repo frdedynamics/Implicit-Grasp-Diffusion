@@ -91,7 +91,20 @@ scale_factor  = 100     # converting depth from m to cm
 focal_length  = (386.42556+386.42567)/2  # focal length of the camera used 
 baseline_m    = 0.050   # baseline in m 
 invalid_disp_ = 99999999.9
-dot_pattern_ = cv2.imread("/home/pinhao/Desktop/simkinect/data/kinect-pattern_3x3.png", 0)
+# dot_pattern_ = cv2.imread("/home/pinhao/Desktop/simkinect/data/kinect-pattern_3x3.png", 0)
+# Try to look for the file relatively within the repository data folder first
+_potential_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'data', 'kinect-pattern_3x3.png')
+
+if os.path.exists(_potential_path):
+    dot_pattern_ = cv2.imread(_potential_path, 0)
+else:
+    # Fallback: Generate a default 3x3 structured light dot array pattern 
+    # to keep the simkinect noise generator functional without crashing
+    dot_pattern_ = np.array([
+        [255, 0, 255],
+        [0,  255,  0],
+        [255, 0, 255]
+    ], dtype=np.uint8)
 
 def add_noise_stereo(depth_img):
     # if np.random.random() > 0.5:

@@ -52,7 +52,7 @@ class SampleDatasetVoxelOccFile(torch.utils.data.Dataset):
         self.num_th = 32
         self.df = read_df(raw_root)
         self.size, _, _, _ = read_setup(raw_root)
-        # self.panda_hand = URDF.load("/home/pinhao/Desktop/GIGA/data/urdfs/panda/hand.urdf")
+        # self.panda_hand = URDF.load(self.urdf+"/panda/hand.urdf")
         # fk = self.panda_hand.collision_trimesh_fk()
         # meshes = list(fk.keys())
         # self.meshes_o3d = []
@@ -238,7 +238,7 @@ class SceneBasedDatasetVoxelOccFile(torch.utils.data.Dataset):
         self.num_th = 32
         self.df = read_df(raw_root)
         self.size, _, _, _ = read_setup(raw_root)
-        # self.panda_hand = URDF.load("/home/pinhao/Desktop/GIGA/data/urdfs/panda/hand.urdf")
+        # self.panda_hand = URDF.load(self.urdf+"/panda/hand.urdf")
         # fk = self.panda_hand.collision_trimesh_fk()
         # meshes = list(fk.keys())
         # self.meshes_o3d = []

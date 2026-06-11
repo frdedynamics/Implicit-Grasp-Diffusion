@@ -9,7 +9,5 @@
     <license>MIT</license>
     <url>https://github.com/mousecpn/Implicit-Grasp-Diffusion.git</url>
 
-    <buildtool_depend>catkin</buildtool_depend>
-
     <depend>rospy</depend>
 </package>

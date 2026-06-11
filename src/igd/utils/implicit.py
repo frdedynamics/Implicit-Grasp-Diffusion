@@ -8,6 +8,8 @@ except:
     pass
     # print('import libmesh failed!')
 
+from pathlib import Path
+
 
 n_iou_points = 100000
 n_iou_points_files = 10
@@ -56,6 +58,7 @@ def get_scene_from_mesh_pose_list(mesh_pose_list, scene_as_mesh=True, return_lis
     # create scene from meshes
     scene = trimesh.Scene()
     mesh_list = []
+    project_root = Path(__file__).resolve().parents[3]
     for mesh_path, scale, pose in mesh_pose_list:
         if os.path.splitext(mesh_path)[1] == '.urdf':
             obj = URDF.load(mesh_path)
@@ -64,10 +67,12 @@ def get_scene_from_mesh_pose_list(mesh_pose_list, scene_as_mesh=True, return_lis
             assert len(obj.links[0].visuals[0].geometry.meshes) == 1
             mesh = obj.links[0].visuals[0].geometry.meshes[0].copy()
         else:
-            # try:
-            mesh = trimesh.load("/home/pinhao/Desktop/GIGA/"+mesh_path)
-            # except:
-            #     mesh = trimesh.load(mesh_path)
+            corrected_mesh_path = project_root / mesh_path
+            if not corrected_mesh_path.exists():
+                # If mesh_path already starts with "data/...", try that explicitly
+                corrected_mesh_path = project_root / "data" / mesh_path
+                
+            mesh = trimesh.load(str(corrected_mesh_path))
 
         mesh.apply_scale(scale)
         mesh.apply_transform(pose)

@@ -107,13 +107,28 @@ class TSDFVolume(object):
         self._volume.integrate(rgbd, intrinsic, extrinsic)
 
     def get_grid(self):
-        # TODO(mbreyer) very slow (~35 ms / 50 ms of the whole pipeline)
         shape = (1, self.resolution, self.resolution, self.resolution)
         tsdf_grid = np.zeros(shape, dtype=np.float32)
-        voxels = self._volume.extract_voxel_grid().get_voxels()
-        for voxel in voxels:
-            i, j, k = voxel.grid_index
-            tsdf_grid[0, i, j, k] = voxel.color[0]
+
+        # Open3D 0.19+: extract_voxel_grid() removed, use extract_voxel_point_cloud()
+        # TSDF values are stored in colors[:,0] (normals are empty with NoColor mode)
+        voxel_pc = self._volume.extract_voxel_point_cloud()
+        points = np.asarray(voxel_pc.points)   # (N, 3) world coords in [0, size]
+        colors = np.asarray(voxel_pc.colors)   # (N, 3) TSDF values, all channels equal
+
+        if len(points) == 0:
+            return tsdf_grid
+
+        # Convert world coordinates to grid indices
+        indices = np.floor(points / self.voxel_size).astype(int)
+
+        # Clip to valid range to avoid out-of-bounds indexing
+        valid = np.all((indices >= 0) & (indices < self.resolution), axis=1)
+        indices = indices[valid]
+        values = colors[valid, 0]  # TSDF value from channel 0
+
+        tsdf_grid[0, indices[:, 0], indices[:, 1], indices[:, 2]] = values
+
         return tsdf_grid
 
     def get_cloud(self):

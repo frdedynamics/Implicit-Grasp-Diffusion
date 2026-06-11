@@ -260,6 +260,9 @@ class ConvolutionalOccupancyDiffuser(nn.Module):
         assert self.batch_size==1, "batch size should be 1 in this mode" 
         p = p.reshape(self.batch_size, self.sample_num,-1)
         
+        # Track the exact active GPU device dynamically
+        target_device = p.device
+        
         feature = self.feature_sampler(p, c)
         feature_dim = feature.shape[-1]
         
@@ -268,12 +271,25 @@ class ConvolutionalOccupancyDiffuser(nn.Module):
         
         mask = (qual > low_th)
         
+        # --- CRITICAL FIX 1: SAFETY BYPASS FOR EMPTY CANDIDATES ---
+        # If no points pass the threshold, return zeros immediately instead of freezing the GPU loop
+        if not mask.any():
+            print("--> [SAFETY BYPASS] No grasp candidates passed low_th. Skipping diffusion sampler loop.")
+            rot = torch.zeros((self.batch_size, self.sample_num, 4), device=target_device)
+            # Standard quaternion layout [w, x, y, z] default identity rotation
+            rot[..., 0] = 1.0 
+            width = torch.zeros((self.batch_size, self.sample_num, 1), device=target_device)
+            return torch.zeros_like(qual), rot, width
+        # ----------------------------------------------------------
+
         p_postive = p[mask].reshape(self.batch_size, -1, 3)
-        
         
         # loop mode
         for i in range(sample_rounds):
-            grasp = self.grasp_sampler.sample_data(p_postive, feature[mask].reshape(self.batch_size, -1, 96), self.decoder_rot)
+            # Ensure the sliced features match the GPU target space explicitly
+            sliced_features = feature[mask].reshape(self.batch_size, -1, 96).to(target_device)
+            
+            grasp = self.grasp_sampler.sample_data(p_postive, sliced_features, self.decoder_rot)
             grasp[...,3:] = nn.functional.normalize(grasp[...,3:], dim=-1)
             grasp_qual = self.decoder_grasp_qual(grasp, c, **kwargs)
             if i == 0:
@@ -287,19 +303,19 @@ class ConvolutionalOccupancyDiffuser(nn.Module):
             last_grasp = comparing_grasp.reshape(self.batch_size, 2, -1, 7).gather(1, indices)
             last_grasp = last_grasp.squeeze(1)
     
-        grasp = torch.randn(self.batch_size, self.sample_num, 7).to(last_grasp.device)
+        # --- CRITICAL FIX 2: PIN ALLOCATIONS EXPLICITLY TO BLACKWELL VRAM ---
+        grasp = torch.randn(self.batch_size, self.sample_num, 7, device=target_device)
         grasp[...,3:] = nn.functional.normalize(grasp[...,3:], dim=-1)
         grasp[mask] = last_grasp.reshape(-1,7)
-        grasp_qual = torch.zeros_like(qual)
+        
+        grasp_qual = torch.zeros_like(qual, device=target_device)
         grasp_qual[mask] = torch.sigmoid(last_grasp_qual.reshape(-1))
 
         rot = grasp[...,3:]
         
         width = self.decoder_width(grasp, c, **kwargs)
         
-        # qual = grasp_qual
         qual = (qual*grasp_qual).sqrt()
-        # qual = reg_qual
         
         return qual, rot, width
 

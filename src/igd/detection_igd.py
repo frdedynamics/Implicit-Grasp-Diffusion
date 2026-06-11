@@ -34,24 +34,36 @@ class IGD(object):
         self.sample_points = None
 
     def __call__(self, state, scene_mesh=None, aff_kwargs={}):
+        print("[IGD 1] entering __call__")
         if hasattr(state, 'tsdf_process'):
             tsdf_process = state.tsdf_process
         else:
             tsdf_process = state.tsdf
+
+        print("[IGD 2] tsdf acquired")
 
         if isinstance(state.tsdf, np.ndarray):
             tsdf_vol = state.tsdf
             voxel_size = 0.3 / self.resolution
             size = 0.3
         else:
+            print("[IGD 2a] calling state.tsdf.get_grid()...")
             tsdf_vol = state.tsdf.get_grid()
+            print("[IGD 2b] get_grid done, getting voxel_size...")
             voxel_size = tsdf_process.voxel_size
+            print("[IGD 2c] getting tsdf_process.get_grid()...")
             tsdf_process = tsdf_process.get_grid()
+            print("[IGD 2d] getting size...")
             size = state.tsdf.size
+            print(f"[IGD 2e] tsdf_vol shape={tsdf_vol.shape}")
 
+        print(f"[IGD 3] tsdf_vol shape={tsdf_vol.shape} dtype={tsdf_vol.dtype}")
         tic = time.time()
 
+        print("[IGD 4] calling predict...")
+        print(f"[CALL] tsdf_vol type: {type(tsdf_vol)}, shape: {tsdf_vol.shape if hasattr(tsdf_vol, 'shape') else 'N/A'}")
         qual_vol, rot_vol, width_vol = self.predict(tsdf_vol, self.pos, self.net, self.device)
+        print("[IGD 5] predict returned OK")
 
         qual_vol = qual_vol.reshape((self.resolution, self.resolution, self.resolution))
         rot_vol = rot_vol.reshape((self.resolution, self.resolution, self.resolution, 4))
@@ -96,22 +108,65 @@ class IGD(object):
         else:
             return grasps, scores, toc
     
+    # def predict(self, tsdf_vol, pos, net, device):
+    #     print(f"[PREDICT] tsdf_vol shape: {tsdf_vol.shape}, dtype: {tsdf_vol.dtype}")
+    #     print(f"[PREDICT] pos shape: {pos.shape}")
+    #     assert tsdf_vol.shape == (1, 40, 40, 40)
+
+    #     # 1. Move the TSDF volume input to the GPU
+    #     tsdf_vol = torch.from_numpy(tsdf_vol).to(device)
+    #     tsdf_vol = tsdf_vol.unsqueeze(1)  # [1,40,40,40] -> [1,1,40,40,40]
+
+    #     # 2. CRITICAL FIX: Convert 'pos' to a PyTorch tensor and move it to the GPU!
+    #     if isinstance(pos, np.ndarray):
+    #         pos = torch.from_numpy(pos).to(device)
+    #     elif torch.is_tensor(pos):
+    #         pos = pos.to(device)
+
+    #     # 3. Safety Check: If pos is empty, bypass the network to prevent a CUDA deadlock
+    #     if pos.numel() == 0:
+    #         print("--> [SAFETY BYPASS] pos is empty! Skipping network to prevent freeze.")
+    #         return np.array([]), np.array([]), np.array([])
+
+    #     # 4. Execute inference safely on the GPU
+    #     with torch.no_grad():
+    #         qual_vol, rot_vol, width_vol = net(tsdf_vol, pos)
+
+    #     qual_vol = qual_vol.detach()
+    #     rot_vol = rot_vol.detach()
+    #     width_vol = width_vol.detach()
+
+    #     # 5. Move output back to the CPU cleanly
+    #     qual_vol = qual_vol.cpu().squeeze().numpy()
+    #     rot_vol = rot_vol.cpu().squeeze().numpy()
+    #     width_vol = width_vol.cpu().squeeze().numpy()
+
+    #     return qual_vol, rot_vol, width_vol
+
     def predict(self, tsdf_vol, pos, net, device):
         assert tsdf_vol.shape == (1, 40, 40, 40)
 
-        # move input to the GPU
+        # 1. Move to GPU — encoder adds channel dim internally, do NOT unsqueeze here
         tsdf_vol = torch.from_numpy(tsdf_vol).to(device)
+        # tsdf_vol shape stays (1,40,40,40) — encoder does x.unsqueeze(1) itself
 
+        # 2. Move pos to device
+        if isinstance(pos, np.ndarray):
+            pos = torch.from_numpy(pos).to(device)
+        elif torch.is_tensor(pos):
+            pos = pos.to(device)
+
+        if pos.numel() == 0:
+            return np.array([]), np.array([]), np.array([])
+
+        # 3. Forward pass
         with torch.no_grad():
             qual_vol, rot_vol, width_vol = net(tsdf_vol, pos)
 
-        qual_vol = qual_vol.detach()
-        rot_vol = rot_vol.detach()
-        width_vol = width_vol.detach()
-        # move output back to the CPU
         qual_vol = qual_vol.cpu().squeeze().numpy()
         rot_vol = rot_vol.cpu().squeeze().numpy()
         width_vol = width_vol.cpu().squeeze().numpy()
+
         return qual_vol, rot_vol, width_vol
 
 def bound(qual_vol, voxel_size, limit=[0.02, 0.02, 0.055]):
