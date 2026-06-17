@@ -61,13 +61,14 @@ NOTE: Never shutdown the robot from the button! Especially if it is FCI active m
 
 1. Browse through ´https://192.170.10.101/desk/´
 2. Release the breaks, activate FCI.
-3. Run the bringup with Moveit_ ´ros2 launch franka_fr3_moveit_config moveit.launch.py   robot_ip:=192.170.10.101   robot_type:=fr3   use_fake_hardware:=false´
+3. Run the bringup with Moveit: `ros2 launch franka_fr3_moveit_config moveit.launch.py robot_ip:=192.170.10.101 robot_type:=fr3 use_fake_hardware:=false`
+4. Run the camera nodes: `ros2 launch realsense2_camera rs_launch.py depth_module.profile:=640x480x30 rgb_camera.profile:=640x480x30 align_depth.enable:=true pointcloud.enable:=false`
 
 The terminal with ROS should have these sourced:
-´´´bash
+```bash
 source /opt/ros/jazzy/setup.bash
 source ~/calibration_ws/install/setup.bash
-´´´
+```
 
-The terminal with IGD should have ´conda activate igd_blackwell´
+The terminal with IGD should have `conda activate igd_blackwell`
 
