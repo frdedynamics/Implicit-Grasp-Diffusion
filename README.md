@@ -63,6 +63,8 @@ NOTE: Never shutdown the robot from the button! Especially if it is FCI active m
 2. Release the breaks, activate FCI.
 3. Run the bringup with Moveit: `ros2 launch franka_fr3_moveit_config moveit.launch.py robot_ip:=192.170.10.101 robot_type:=fr3 use_fake_hardware:=false`
 4. Run the camera nodes: `ros2 launch realsense2_camera rs_launch.py depth_module.profile:=640x480x30 rgb_camera.profile:=640x480x30 align_depth.enable:=true pointcloud.enable:=false`
+5. Run the calibrator: `ros2 run fr3_realsense_calibration charuco_detector`
+6. Run easyhandeye2: `ros2 launch easy_handeye2 calibrate.launch.py    name:=fr3_realsense_eih    calibration_type:=eye_in_hand    robot_base_frame:=fr3_link0    robot_effector_frame:=fr3_link8    tracking_base_frame:=camera_color_optical_frame    tracking_marker_frame:=charuco_board`
 
 The terminal with ROS should have these sourced:
 ```bash
