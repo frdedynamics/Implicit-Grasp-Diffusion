@@ -8,7 +8,7 @@ Linux Kernel:             6.8.1-1048-realtime
 Python Version:           3.11.15
 
 PyTorch:                  2.11.0+cu128
-CUDA Available:           True
+CUDA Available:           True (12.8)
 CUDA Device Name:         NVIDIA GeForce RTX 5090
 Numpy:                    1.26.4
 Scipy:                    1.17.1
