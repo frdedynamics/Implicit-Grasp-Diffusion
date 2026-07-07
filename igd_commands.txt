@@ -10,7 +10,32 @@
 	#. Terminal 3: ros2 run fr3_realsense_calibration charuco_detector
 	#. Terminal 4: ros2 launch easy_handeye2 calibrate.launch.py   name:=fr3_realsense_eih3   calibration_type:=eye_in_hand   robot_base_frame:=fr3_link0   robot_effector_frame:=fr3_link8   tracking_base_frame:=camera_color_optical_frame   tracking_marker_frame:=charuco_board   # or tracking_base_frame:=camera_link
 	
-	
+## Current calibration values
+
+~/.ros2/easy_handeye2/calibrations
+
+```
+parameters:
+  name: fr3_realsense_eih3
+  calibration_type: eye_in_hand
+  robot_base_frame: fr3_link0
+  robot_effector_frame: fr3_link8
+  tracking_base_frame: camera_link
+  tracking_marker_frame: charuco_board
+  freehand_robot_movement: true
+  move_group_namespace: /
+  move_group: manipulator
+transform:
+  translation:
+    x: -0.09273507169284359
+    y: -0.06426830828927647
+    z: 0.28303784586892516
+  rotation:
+    x: 0.14083815340036504
+    y: -0.35976303539250853
+    z: 0.05089910979591879
+    w: 0.9209475845746741
+```
 	
 	
 ## Nice to know commands
