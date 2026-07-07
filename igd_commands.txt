@@ -1,0 +1,29 @@
+# ROS related:
+
+#. source gizem_ros_env.sh  (For all 4 terminals)
+#. Go to Franka Desk on the browser: https://192.170.10.101/desk/
+	#. Release brakes
+	#. Activate FCI
+	#. Make sure the robot is in "Execution" mode for running the code. (Programmingis for manual push)
+	#. Terminaø 1: ros2 launch franka_fr3_moveit_config moveit.launch.py   robot_ip:=192.170.10.101   robot_type:=fr3   use_fake_hardware:=false
+	#. Terminal 2: ros2 launch realsense2_camera rs_launch.py   depth_module.profile:=1280x720x30   rgb_camera.profile:=1280x720x30   align_depth.enable:=true   pointcloud.enable:=false
+	#. Terminal 3: ros2 run fr3_realsense_calibration charuco_detector
+	#. Terminal 4: ros2 launch easy_handeye2 calibrate.launch.py   name:=fr3_realsense_eih3   calibration_type:=eye_in_hand   robot_base_frame:=fr3_link0   robot_effector_frame:=fr3_link8   tracking_base_frame:=camera_color_optical_frame   tracking_marker_frame:=charuco_board   # or tracking_base_frame:=camera_link
+	
+	
+	
+	
+## Nice to know commands
+#. Shows all frames: ros2 run tf2_tools view_frames
+#. python3 ~/calibration_ws/src/fr3_realsense_calibration/fr3_realsense_calibration/calibration_pose_mover.py # for auto moving robot
+	
+
+
+
+
+
+
+# IGD related:
+
+#. source gizem_learning_env.sh
+https://github.com/frdedynamics/Implicit-Grasp-Diffusion/blob/hvl-robotics/README.md
