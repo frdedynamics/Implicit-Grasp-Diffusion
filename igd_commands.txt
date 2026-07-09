@@ -6,13 +6,21 @@
 	#. Activate FCI
 	#. Make sure the robot is in "Execution" mode for running the code. (Programmingis for manual push)
 	#. Terminaø 1: ros2 launch franka_fr3_moveit_config moveit.launch.py   robot_ip:=192.170.10.101   robot_type:=fr3   use_fake_hardware:=false
-	#. Terminal 2: ros2 launch realsense2_camera rs_launch.py   depth_module.profile:=1280x720x30   rgb_camera.profile:=1280x720x30   align_depth.enable:=true   pointcloud.enable:=false
+	#. Terminal 2: ros2 launch realsense2_camera rs_launch.py   depth_module.profile:=1280x720x30   rgb_camera.profile:=1280x720x30   align_depth.enable:=true   pointcloud.enable:=true
+	
+	If you are using charuco board:
 	#. Terminal 3: ros2 run fr3_realsense_calibration charuco_detector
-	#. Terminal 4: ros2 launch easy_handeye2 calibrate.launch.py   name:=fr3_realsense_eih3   calibration_type:=eye_in_hand   robot_base_frame:=fr3_link0   robot_effector_frame:=fr3_link8   tracking_base_frame:=camera_color_optical_frame   tracking_marker_frame:=charuco_board   # or tracking_base_frame:=camera_link
+	#. Terminal 4: ros2 launch easy_handeye2 calibrate.launch.py   name:=fr3_realsense_eih3   calibration_type:=eye_in_hand   robot_base_frame:=fr3_link0   robot_effector_frame:=fr3_link8   tracking_base_frame:=camera_link   tracking_marker_frame:=charuco_board 
+	
+	If you are using AptilTag0
+	#. Terminal 3: ros2 run apriltag_ros apriltag_node --ros-args -r image_rect:=/camera/camera/color/image_raw -r camera_info:=/camera/camera/color/camera_info --params-file /home/hvl-robotics2404/Downloads/tags_36h11.yaml
+	#. Terminal 4: ros2 launch easy_handeye2 calibrate.launch.py   name:=fr3_realsense_eih3   calibration_type:=eye_in_hand   robot_base_frame:=fr3_link0   robot_effector_frame:=fr3_link8   tracking_base_frame:=camera_link tracking_marker_frame:=tag0
 	
 ## Current calibration values
 
 ~/.ros2/easy_handeye2/calibrations
+cat /home/hvl-robotics2404/.ros2/easy_handeye2/calibrations/fr3_realsense_eih3.calib
+
 
 ```
 parameters:
@@ -21,34 +29,84 @@ parameters:
   robot_base_frame: fr3_link0
   robot_effector_frame: fr3_link8
   tracking_base_frame: camera_link
-  tracking_marker_frame: charuco_board
+  tracking_marker_frame: tag0
   freehand_robot_movement: true
   move_group_namespace: /
   move_group: manipulator
 transform:
   translation:
-    x: -0.09273507169284359
-    y: -0.06426830828927647
-    z: 0.28303784586892516
+    x: 0.007634840675866037
+    y: -0.03742539666042641
+    z: 0.051474263787987695
   rotation:
-    x: 0.14083815340036504
-    y: -0.35976303539250853
-    z: 0.05089910979591879
-    w: 0.9209475845746741
+    x: 0.648641168459627
+    y: -0.28323163341151947
+    z: 0.6470167488460856
+    w: 0.2835732764683831
 ```
+Static transform publisher: ros2 run tf2_ros static_transform_publisher   --x 0.007634840675866037 --y -0.03742539666042641 --z 0.051474263787987695  --qx 0.648641168459627 --qy -0.28323163341151947 --qz 0.6470167488460856 --qw 0.2835732764683831  --frame-id fr3_link8 --child-frame-id camera_link`
+
+## Gripper related
+
+Grasp command: `ros2 action send_goal /franka_gripper/grasp franka_msgs/action/Grasp "{width: 0.02, speed: 0.1, force: 20.0, epsilon: {inner: 0.1, outer: 0.1}}"`
+Gripper open: `ros2 action send_goal /franka_gripper/move franka_msgs/action/Move "{width: 0.1, speed: 0.1}"`
 	
 	
 ## Nice to know commands
 #. Shows all frames: ros2 run tf2_tools view_frames
 #. python3 ~/calibration_ws/src/fr3_realsense_calibration/fr3_realsense_calibration/calibration_pose_mover.py # for auto moving robot
+#. ros2 topic echo /detections # Check if the detection_margin is above 120-ish
 	
-
-
-
-
 
 
 # IGD related:
 
 #. source gizem_learning_env.sh
 https://github.com/frdedynamics/Implicit-Grasp-Diffusion/blob/hvl-robotics/README.md
+
+Notes:
+#. Tabletop: ros2 run tf2_ros tf2_echo fr3_link0 fr3_hand_tcp
+- Translation: [0.392, 0.007, -0.048]
+- Rotation: in Quaternion (xyzw) [1.000, -0.013, -0.013, 0.003]
+- Rotation: in RPY (radian) [3.136, 0.027, -0.027]
+- Rotation: in RPY (degree) [179.689, 1.535, -1.528]
+- Matrix:
+  0.999 -0.027 -0.027  0.392
+ -0.027 -1.000 -0.005  0.007
+ -0.027  0.005 -1.000 -0.048
+  0.000  0.000  0.000  1.000
+  
+ #. Scan pose 1: ros2 run tf2_ros tf2_echo fr3_link0 fr3_hand_tcp
+- Translation: [0.601, 0.145, 0.281]
+- Rotation: in Quaternion (xyzw) [-0.229, 0.950, -0.084, -0.194]
+- Rotation: in RPY (radian) [-3.063, -0.419, -2.685]
+- Rotation: in RPY (degree) [-175.515, -24.028, -153.838]
+- Matrix:
+ -0.820 -0.468 -0.330  0.601
+ -0.403  0.881 -0.249  0.145
+  0.407 -0.071 -0.911  0.281
+  0.000  0.000  0.000  1.000
+  
+  name:
+- fr3_joint1
+- fr3_joint2
+- fr3_joint3
+- fr3_joint4
+- fr3_joint5
+- fr3_joint6
+- fr3_joint7
+- fr3_finger_joint1
+- fr3_finger_joint2
+position:
+- -0.4009487079078913
+- 0.7724478576166167
+- 1.0131253294138474
+- -1.3681402261171223
+- -0.6641013412685652
+- 1.3643312150795819
+- -2.21143726898553
+- 0.0
+- 0.0
+
+
+
