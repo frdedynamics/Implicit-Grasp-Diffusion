@@ -45,7 +45,8 @@ def build_state(depth_m, K, extrinsic_mat, resolution=40):
     inset, floor = 0.02, 0.055
     lower = np.array([inset, inset, floor])
     upper = np.array([SIZE - inset, SIZE - inset, SIZE])
-    pc = high.get_cloud().crop(o3d.geometry.AxisAlignedBoundingBox(lower, upper))
+    # pc = high.get_cloud().crop(o3d.geometry.AxisAlignedBoundingBox(lower, upper))
+    pc = high.get_cloud()
     return argparse.Namespace(tsdf=tsdf, pc=pc), pc
 
 
@@ -80,6 +81,8 @@ def main():
     ap.add_argument("--extrinsic", required=True, help="4x4 .npy, task->camera")
     ap.add_argument("--model", required=True)
     ap.add_argument("--type", default="igd")
+    ap.add_argument("--qual-th", type=float, default=0.5,
+                    help="lower (e.g. 0.1) to inspect all candidates")
     ap.add_argument("--depth-scale", type=float, default=1000.0,
                     help="divide raw depth by this to get metres "
                          "(1000 for uint16 mm, 1.0 if already metres)")
@@ -102,7 +105,7 @@ def main():
               "depth scale before trusting anything below.")
 
     detector = VGNImplicit(args.model, args.type, best=True,
-                           force_detection=True, qual_th=0.9,
+                           force_detection=True, qual_th=args.qual_th,
                            out_th=0.5, visualize=False, resolution=40)
     grasps, scores, toc = detector(state, None)
     print(f"{len(grasps)} grasps in {toc:.3f}s")

@@ -60,9 +60,51 @@ Gripper open: `ros2 action send_goal /franka_gripper/move franka_msgs/action/Mov
 
 
 # IGD related:
+Remember to add PYTHONPATH for fr3 related: export PYTHONPATH="${PYTHONPATH}:/home/hvl-robotics2404/franka_ros2_ws/src/igd_fr3_control/igd_fr3_control" and this to igd_blackwell venvs: PYTHONPATH=$(pwd)/src:$PYTHONPATH
+
 
 #. source gizem_learning_env.sh
 https://github.com/frdedynamics/Implicit-Grasp-Diffusion/blob/hvl-robotics/README.md
+
+
+#. Terminal 1: ros2 launch franka_fr3_moveit_config moveit.launch.py   robot_ip:=192.170.10.101   robot_type:=fr3   use_fake_hardware:=false load_gripper:=true
+#. Terminal 2: ros2 launch realsense2_camera rs_launch.py   depth_module.profile:=1280x720x30   rgb_camera.profile:=1280x720x30   align_depth.enable:=true   pointcloud.enable:=true
+#. Terminal 3: ros2 run igd_fr3_control tsdf_grasp_node
+#. Terminal 4. ros2 run tf2_ros static_transform_publisher   --x 0.007634840675866037 --y -0.03742539666042641 --z 0.051474263787987695  --qx 0.648641168459627 --qy -0.28323163341151947 --qz 0.6470167488460856 --qw 0.2835732764683831  --frame-id fr3_link8 --child-frame-id camera_link
+#. Terminal 5: ros2 run tf2_ros static_transform_publisher 0.30 -0.15 -0.1 0 0 0 fr3_link0 task
+
+#. Terminal 6:
+```
+python3 -c "
+import rclpy, numpy as np
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+rclpy.init(); n=Node('grab'); b=CvBridge(); got=[]
+n.create_subscription(Image,'/camera/camera/aligned_depth_to_color/image_raw',                                           
+                      lambda m: got.append(b.imgmsg_to_cv2(m,'passthrough')),10)
+while not got: rclpy.spin_once(n)
+np.save('/tmp/depth.npy', got[0]); print('saved', got[0].shape, got[0].dtype)"
+```
+
+```
+python3 -c "
+import numpy as np
+d = np.load('/tmp/depth.npy').astype(np.float32)
+d = d/1000.0 if d.max()>100 else d
+print('shape', d.shape, 'dtype', np.load('/tmp/depth.npy').dtype)                                                 
+print('valid (>0) fraction:', (d>0).mean())
+print('depth range (valid):', d[d>0].min(), d[d>0].max())
+print('median depth:', np.median(d[d>0]))"
+```
+
+#. Terminal 7 (in igd_blackwell venv)
+python scripts/offline_test.py   --depth /tmp/depth.npy   --width 1280 --height 720   --fx 640.51 --fy 640.51 --cx 641.20 --cy 366.90   --extrinsic /tmp/extrinsic.npy   --model ./data/models/IGD_pile.pt --type igd
+
+
+#. If you need to adjust camera extrinsics then: python3 save_extrinsic.py --camera camera_color_optical_frame --task task --out /tmp/extrinsic.npy
+
+
 
 Notes:
 #. Tabletop: ros2 run tf2_ros tf2_echo fr3_link0 fr3_hand_tcp
@@ -76,37 +118,6 @@ Notes:
  -0.027  0.005 -1.000 -0.048
   0.000  0.000  0.000  1.000
   
- #. Scan pose 1: ros2 run tf2_ros tf2_echo fr3_link0 fr3_hand_tcp
-- Translation: [0.601, 0.145, 0.281]
-- Rotation: in Quaternion (xyzw) [-0.229, 0.950, -0.084, -0.194]
-- Rotation: in RPY (radian) [-3.063, -0.419, -2.685]
-- Rotation: in RPY (degree) [-175.515, -24.028, -153.838]
-- Matrix:
- -0.820 -0.468 -0.330  0.601
- -0.403  0.881 -0.249  0.145
-  0.407 -0.071 -0.911  0.281
-  0.000  0.000  0.000  1.000
   
-  name:
-- fr3_joint1
-- fr3_joint2
-- fr3_joint3
-- fr3_joint4
-- fr3_joint5
-- fr3_joint6
-- fr3_joint7
-- fr3_finger_joint1
-- fr3_finger_joint2
-position:
-- -0.4009487079078913
-- 0.7724478576166167
-- 1.0131253294138474
-- -1.3681402261171223
-- -0.6641013412685652
-- 1.3643312150795819
-- -2.21143726898553
-- 0.0
-- 0.0
-
 
 
