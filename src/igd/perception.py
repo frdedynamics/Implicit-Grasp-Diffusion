@@ -88,7 +88,7 @@ class TSDFVolume(object):
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
             o3d.geometry.Image(np.empty_like(depth_img)),
             o3d.geometry.Image(depth_img),
-            depth_scale=1.0,
+            depth_scale=1.0,                        
             depth_trunc=2.0,
             convert_rgb_to_intensity=False,
         )

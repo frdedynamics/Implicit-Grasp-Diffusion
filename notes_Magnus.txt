@@ -1,0 +1,260 @@
+T6: 
+_____
+python3 save_extrinsic.py --camera camera_color_optical_frame --task task --out /tmp/extrinsic_view1.npy
+_____
+python3 save_extrinsic.py --camera camera_color_optical_frame --task task --out /tmp/extrinsic_view2.npy
+_____
+python3 save_extrinsic.py --camera camera_color_optical_frame --task task --out /tmp/extrinsic_view3.npy
+__
+python3 save_extrinsic.py --camera camera_color_optical_frame --task task --out /tmp/extrinsic_view4.npy
+__
+python3 -c "
+import sys, rclpy, numpy as np
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+
+out = sys.argv[1] if len(sys.argv) > 1 else '/tmp/depth.npy'
+rclpy.init(); n = Node('grab'); b = CvBridge(); got = []
+n.create_subscription(Image, '/camera/camera/aligned_depth_to_color/image_raw',
+                      lambda m: got.append(b.imgmsg_to_cv2(m, 'passthrough')), 10)
+while not got: rclpy.spin_once(n)
+np.save(out, got[0]); print(f'saved {out}', got[0].shape, got[0].dtype)
+" /tmp/depth_view1.npy
+
+_____________
+python3 -c "
+import sys, rclpy, numpy as np
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+
+out = sys.argv[1] if len(sys.argv) > 1 else '/tmp/depth.npy'
+rclpy.init(); n = Node('grab'); b = CvBridge(); got = []
+n.create_subscription(Image, '/camera/camera/aligned_depth_to_color/image_raw',
+                      lambda m: got.append(b.imgmsg_to_cv2(m, 'passthrough')), 10)
+while not got: rclpy.spin_once(n)
+np.save(out, got[0]); print(f'saved {out}', got[0].shape, got[0].dtype)
+" /tmp/depth_view2.npy
+________
+python3 -c "
+import sys, rclpy, numpy as np
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+
+out = sys.argv[1] if len(sys.argv) > 1 else '/tmp/depth.npy'
+rclpy.init(); n = Node('grab'); b = CvBridge(); got = []
+n.create_subscription(Image, '/camera/camera/aligned_depth_to_color/image_raw',
+                      lambda m: got.append(b.imgmsg_to_cv2(m, 'passthrough')), 10)
+while not got: rclpy.spin_once(n)
+np.save(out, got[0]); print(f'saved {out}', got[0].shape, got[0].dtype)
+" /tmp/depth_view3.npy
+______
+python3 -c "
+import sys, rclpy, numpy as np
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+
+out = sys.argv[1] if len(sys.argv) > 1 else '/tmp/depth.npy'
+rclpy.init(); n = Node('grab'); b = CvBridge(); got = []
+n.create_subscription(Image, '/camera/camera/aligned_depth_to_color/image_raw',
+                      lambda m: got.append(b.imgmsg_to_cv2(m, 'passthrough')), 10)
+while not got: rclpy.spin_once(n)
+np.save(out, got[0]); print(f'saved {out}', got[0].shape, got[0].dtype)
+" /tmp/depth_view4.npy
+______________
+python3 -c "
+import sys, numpy as np
+path = sys.argv[1] if len(sys.argv) > 1 else '/tmp/depth.npy'
+raw = np.load(path)
+d = raw.astype(np.float32)
+d = d/1000.0 if d.max() > 100 else d
+print(path)
+print('shape', d.shape, 'dtype', raw.dtype)
+print('valid (>0) fraction:', (d > 0).mean())
+print('depth range (valid):', d[d > 0].min(), d[d > 0].max())
+print('median depth:', np.median(d[d > 0]))
+"  /tmp/depth_view1.npy
+
+_________
+python scripts/offline_test.py --depth /tmp/depth_view1.npy /tmp/depth_view2.npy --extrinsic /tmp/extrinsic_view1.npy  /tmp/extrinsic_view2.npy --fx 640.5 --fy 640.5 --cx 641.2 --cy 366.9 --width 1280 --height 720 --model ./data/models/IGD_pile.pt --type igd
+    _____
+    python scripts/offline_test.py \
+    --depth /tmp/depth_view1.npy /tmp/depth_view2.npy /tmp/depth_view3.npy /tmp/depth_view4.npy \
+    --extrinsic /tmp/extrinsic_view1.npy /tmp/extrinsic_view2.npy /tmp/extrinsic_view3.npy /tmp/extrinsic_view4.npy\
+    --fx 640.5 --fy 640.5 --cx 641.2 --cy 366.9 \
+    --width 848 --height 480 \
+    --model ./data/models/IGD_pile.pt --type igd \
+    --per-view-debug
+    
+    ____
+       python scripts/offline_test.py \
+    --depth /tmp/depth_view1.npy /tmp/depth_view2.npy \
+    --extrinsic /tmp/extrinsic_view1.npy /tmp/extrinsic_view2.npy \
+    --fx 640.5 --fy 640.5 --cx 641.2 --cy 366.9 \
+    --width 1280 --height 720 \
+    --model ./data/models/IGD_pile.pt --type igd \
+    --per-view-debug
+    
+    
+    __
+    cam
+    ros2 launch realsense2_camera rs_launch.py     depth_module.depth_profile:=1280x720x30     rgb_camera.color_profile:=1280x720x30     align_depth.enable:=true     pointcloud.enable:=true       spatial_filter.enable:=true     temporal_filter.enable:=true     hole_filling_filter.enable:=true
+
+
+ros2 launch realsense2_camera rs_launch.py     depth_module.depth_profile:=848x480x30     rgb_camera.color_profile:=848x480x30     align_depth.enable:=true     pointcloud.enable:=true       spatial_filter.enable:=true     temporal_filter.enable:=true     hole_filling_filter.enable:=true
+
+Anna teminal: 
+ros2 param set /camera/camera depth_module.emitter_enabled 1
+ros2 param set /camera/camera depth_module.laser_power 120.0
+
+____
+python3 view_capture.py --camera camera_color_optical_frame --task task --out-prefix /tmp/view1
+python3 view_capture.py --camera camera_color_optical_frame --task task --out-prefix /tmp/view2
+python3 view_capture.py --camera camera_color_optical_frame --task task --out-prefix /tmp/view3
+python3 view_capture.py --camera camera_color_optical_frame --task task --out-prefix /tmp/view4
+
+python scripts/offline_test.py \
+    --depth /tmp/view1_depth.npy /tmp/view2_depth.npy /tmp/view3_depth.npy /tmp/view4_depth.npy  \
+    --extrinsic /tmp/view1_extrinsic.npy /tmp/view2_extrinsic.npy /tmp/view3_extrinsic.npy /tmp/view4_extrinsic.npy \
+    --fx 910.8385620117188 --fy 910.7046508789062 --cx 655.1258544921875 --cy 368.407470703125 \
+    --width 1280 --height 720 \
+    --model ./data/models/IGD_pile.pt --type igd \
+    --per-view-debug
+    
+    python scripts/offline_test.py \
+    --depth /tmp/view1_depth.npy /tmp/view2_depth.npy /tmp/view3_depth.npy \
+    --extrinsic /tmp/view1_extrinsic.npy /tmp/view2_extrinsic.npy /tmp/view3_extrinsic.npy \
+    --fx 910.8385620117188 --fy 910.7046508789062 --cx 655.1258544921875 --cy 368.407470703125 \
+    --width 1280 --height 720 \
+    --model ./data/models/IGD_pile.pt --type igd \
+    --per-view-debug
+    
+    
+    python scripts/offline_test.py \
+    --depth /tmp/view1_depth.npy /tmp/view2_depth.npy \
+    --extrinsic /tmp/view1_extrinsic.npy /tmp/view2_extrinsic.npy \
+    --fx 910.8385620117188 --fy 910.7046508789062 --cx 655.1258544921875 --cy 368.407470703125 \
+    --width 1280 --height 720 \
+    --model ./data/models/IGD_pile.pt --type igd \
+    --per-view-debug
+    
+        python scripts/offline_test.py \
+    --depth /tmp/view1_depth.npy /tmp/view3_depth.npy \
+    --extrinsic /tmp/view1_extrinsic.npy /tmp/view3_extrinsic.npy \
+    --fx 640.5 --fy 640.5 --cx 641.2 --cy 366.9 \
+    --width 1280 --height 720 \
+    --model ./data/models/IGD_pile.pt --type igd \
+    --per-view-debug
+    
+    
+python scripts/offline_test2.py \
+    --depth /tmp/view1_depth.npy /tmp/view2_depth.npy /tmp/view3_depth.npy /tmp/view4_depth.npy \
+    --extrinsic /tmp/view1_extrinsic.npy /tmp/view2_extrinsic.npy /tmp/view3_extrinsic.npy /tmp/view4_extrinsic.npy  \
+    --fx 910.8385620117188 --fy 910.7046508789062 --cx 655.1258544921875 --cy 368.407470703125 \
+    --width 1280 --height 720 \
+    --model ./data/models/IGD_pile.pt --type igd \   
+    --diagnose-only
+
+ros2 run tf2_ros static_transform_publisher \
+  --x 0.01190035030687744 --y -0.035882487996568395 --z 0.049182222737327995 \
+  --qx 0.6506453880473339 --qy -0.2863144715677203 --qz 0.6445464202539527 --qw 0.28150402221184445 \
+  --frame-id fr3_link8 --child-frame-id camera_link
+
+
+ros2 launch easy_handeye2 calibrate.launch.py   name:=fr3_realsense_eih32   calibration_type:=eye_in_hand   robot_base_frame:=fr3_link0   robot_effector_frame:=fr3_link8   tracking_base_frame:=camera_color_optical_frame tracking_marker_frame:=tag0
+
+Check if code takes into account cam pos
+
+calib cam: ros2 launch realsense2_camera rs_launch.py \
+  depth_module.depth_profile:=1280x720x30 \
+  rgb_camera.color_profile:=1280x720x30 \
+  align_depth.enable:=true \
+  pointcloud.enable:=false
+  
+  3-4 samples at a "nominal" pose — camera roughly straight down at the marker, just translating the arm slightly between shots (small XY moves, tag comfortably in frame, not too oblique). This anchors the easy case.
+~4 samples rotating about the camera's roll axis (rotate the wrist/hand around its own viewing axis) — e.g. 0°, ±30°, ±60° relative to nominal, while still looking generally at the marker.
+~4 samples tilting the camera off-axis (pitch/yaw) — angle the camera in toward the marker from different oblique directions (left side, right side, front, back), each maybe 30-45° off vertical. This is what gives you the "left/right" diversity you were missing.
+~4-6 samples specifically bridging toward your problem orientation — since your real failure shows up at a ~180° wrist flip, don't jump straight from nominal to fully flipped. Take intermediate samples at roughly 45°, 90°, 135°, and then as close to your actual 180°-flip operating pose as still keeps the marker trackable. If the flipped orientation genuinely can't see the marker at all from any position, that's important information too — it means that orientation is fundamentally outside what eye-in-hand calibration (with a single fixed marker) can constrain, and you'd need a marker reachable from that orientation as well, or a second calibration marker position.
+A couple of "redundant" repeats at some already-sampled orientation (their doc explicitly recommends redundant poses) — helps average out noise.
+
+
+ros2 run tf2_ros static_transform_publisher \
+  --x 0.01674481570407708 --y -0.03304574774396586 --z 0.04721905541745774 \
+  --qx 0.6474661681420777 --qy -0.2872192951806934 --qz 0.6484239578085708 --qw 0.2789964310294834 \
+  --frame-id fr3_link8 --child-frame-id camera_link
+  
+  ny:
+  ros2 run tf2_ros static_transform_publisher --x 0.010583 --y -0.023985 --z 0.057049 --qx -0.662501 --qy 0.283312 --qz -0.637002 --qw -0.273961 --frame-id fr3_link8 --child-frame-id camera_link
+
+  
+  python3 scriptython3 script
+s/compare_tag_check.py --prefix /tmp/view1 /tmp/view2 /tmp/view3 
+python3 scripts/compare_tag_check.py --prefix /tmp/view1 /tmp/view2 /tmp/view3 
+
+
+ python scripts/compare_tag_check.py \
+    --depth /tmp/view1_depth.npy /tmp/view3_depth.npy \
+    --extrinsic /tmp/view1_extrinsic.npy /tmp/view3_extrinsic.npy \
+    --fx 910.8385620117188 --fy 910.7046508789062 --cx 655.1258544921875 --cy 368.407470703125 \
+    --width 1280 --height 720 \
+    --model ./data/models/IGD_pile.pt --type igd \
+    --per-view-debug
+    
+    --qx 0.643615 --qy -0.298065 --qz 0.640209 --qw 0.295039
+    
+    
+    ros2 run tf2_ros static_transform_publisher --x 0.0 --y -0.0655 --z 0.0525 --qx 0.707 --qy -0.0 --qz 0.707 --qw 0.0 --frame-id fr3_link8 --child-frame-id camera_link
+
+
+ros2 run tf2_ros static_transform_publisher \
+  --x 0.007485385794087047 --y -0.056869109289237635 --z 0.06188578329499833 \
+  --qx 0.6366592934456814 --qy -0.2940104007394373 --qz 0.6305794796110675 --qw 0.3325542786068418 \
+  --frame-id fr3_link8 --child-frame-id camera_link
+  
+  
+ros2 run tf2_ros static_transform_publisher --x 0.034000 --y 0.000000 --z 0.065000 --qx 0.000000 --qy 0.000002 --qz -0.707107 --qw 0.707107 --frame-id fr3_hand --child-frame-id camera_color_optical_frame
+
+
+At time 0.0
+- Translation: [0.040, -0.058, 0.061]
+- Rotation: in Quaternion (xyzw) [0.637, -0.272, 0.663, 0.284]
+- Rotation: in RPY (radian) [-0.000, -1.530, 2.333]
+- Rotation: in RPY (degree) [-0.000, -87.663, 133.659]
+- Matrix:
+ -0.028 -0.723  0.690  0.040
+  0.030 -0.690 -0.723 -0.058
+  0.999 -0.000  0.041  0.061
+  0.000  0.000  0.000  1.000
+
+___
+At time 0.0
+- Translation: [0.017, -0.052, 0.061]
+- Rotation: in Quaternion (xyzw) [0.645, -0.289, 0.645, 0.289]
+- Rotation: in RPY (radian) [2.498, -1.571, 0.000]
+- Rotation: in RPY (degree) [143.130, -90.000, 0.000]
+- Matrix:
+  0.000 -0.746  0.666  0.017
+ -0.000 -0.666 -0.746 -0.052
+  1.000  0.000 -0.000  0.061
+  0.000  0.000  0.000  1.000
+  
+fjern 26
+
+ros2 run tf2_ros static_transform_publisher   --x 0.027150 --y -0.045610 --z 0.063850   --roll -1.011240 --pitch -1.558710 --yaw -2.943920   --frame-id fr3_link8 --child-frame-id camera_link
+
+
+ros2 launch realsense2_camera rs_launch.py     depth_module.depth_profile:=1280x720x30     rgb_camera.color_profile:=1280x720x30     align_depth.enable:=true     pointcloud.enable:=true       spatial_filter.enable:=true     temporal_filter.enable:=true     hole_filling_filter.enable:=true
+disparity_filter.enable:=true desimation.enable:=true hdr_merge.enable:=true
+
+
+
+ros2 run tf2_ros static_transform_publisher --x 0.022 --y -0.048 --z 0.061 --qx 0.653 --qy -0.271 --qz 0.653 --qw 0.271 --frame-id fr3_link8 --child-frame-id camera_base_link
+ros2 run tf2_ros static_transform_publisher --x 0.0 --y 0.0 --z 0.0 --qx -0.0122164 --qy -0.0034903 --qz 0.0000426 --qw 0.9999192 --frame-id camera_base_link --child-frame-id camera_link
+
+
+ros2 run tf2_ros static_transform_publisher   --x 0.0.022318960289373503 --y -0.04958568085193233 --z 0.0634623828850649  --qx 0.6492451536106222 --qy -0.2790968913469849 --qz 0.6509880136172744 --qw 0.27712860170001236  --frame-id fr3_link8 --child-frame-id camera_link
+
+fix payload

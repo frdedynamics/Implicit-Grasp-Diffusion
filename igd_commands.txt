@@ -20,6 +20,9 @@
 
 ~/.ros2/easy_handeye2/calibrations
 cat /home/hvl-robotics2404/.ros2/easy_handeye2/calibrations/fr3_realsense_eih3.calib
+~/.ros2/easy_handeye2/calibrations
+cat /home/hvl-robotics2404/.ros2/easy_handeye2/calibrations/fr3_realsense_eih3.calib
+bash: /home/hvl-robotics2404/.ros2/easy_handeye2/calibrations: Is a directory
 
 
 ```
@@ -60,8 +63,9 @@ Gripper open: `ros2 action send_goal /franka_gripper/move franka_msgs/action/Mov
 
 
 # IGD related:
-Remember to add PYTHONPATH for fr3 related: export PYTHONPATH="${PYTHONPATH}:/home/hvl-robotics2404/franka_ros2_ws/src/igd_fr3_control/igd_fr3_control" and this to igd_blackwell venvs: PYTHONPATH=$(pwd)/src:$PYTHONPATH
+Remember to add PYTHONPATH for fr3 related: export PYTHONPATH="${PYTHONPATH}:/home/hvl-robotics2404/franka_ros2_ws/src/igd_fr3_control/igd_fr3_control" and this to igd_blackwell venvs: export PYTHONPATH=$(pwd)/src:$PYTHONPATH
 
+Måtte bruke: cd franka_ros2_ws/src/igd_fr3_control/igd_fr3_control/ i t6 og 
 
 #. source gizem_learning_env.sh
 https://github.com/frdedynamics/Implicit-Grasp-Diffusion/blob/hvl-robotics/README.md
@@ -120,4 +124,17 @@ Notes:
   
   
 
+Duplicate camer_color_optical_frame
+	
+	ros2 run tf2_ros static_transform_publisher   --x 0.0 --y -0.015 --z 0.0  --qx 0.5 --qy -0.5 --qz 0.5 --qw 0.5  --frame-id camera_color_optical_frame --child-frame-id dup_camera_color_optical_frame
+	
+	___
+	Manual calibration
+	ros2 run tf2_ros static_transform_publisher   --x 0.0194 --y -0.0 --z 0.043   --qx 0.0 --qy -0.0 --qz 0.0 --qw 1.0   --frame-id fr3_hand --child-frame-id camera_base_link
+	
+	ros2 run tf2_ros static_transform_publisher   --x 0.011 --y -0.018 --z 0.013   --qx 0.0 --qy -0.7071068 --qz 0.0 --qw 0.7071068   --frame-id camera_base_link --child-frame-id camera_link
+	
+	ros2 run tf2_ros static_transform_publisher   --x 0.0 --y -0.0 --z 0.0   --qx 1.0 --qy -0.0 --qz 0.0 --qw 0.0   --frame-id camera_link_base_2 --child-frame-id camera_link
 
+___
+Running transformation:ros2 run tf2_ros static_transform_publisher   --x 0.031547257468144414 --y -0.04636969430940841 --z 0.05859108743072951  --qx 0.6477782786586627 --qy -0.2835418261326239 --qz 0.6488784171230971 --qw 0.2809699882962976  --frame-id fr3_link8 --child-frame-id camera_link
